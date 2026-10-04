@@ -1,0 +1,15 @@
+{
+  "Prowlarr2MP": {
+    "name": "Prowlarr2MP",
+    "description": "将 Prowlarr 的索引器（公开 / 半公开 / 私有）桥接进 MoviePilot：手动加站后，用 Prowlarr 统一搜索并下载。",
+    "labels": "站点,prowlarr,search,rss",
+    "version": "1.0.0",
+    "icon": "Prowlarr2MP.png",
+    "author": "FlameSky-S",
+    "level": 2,
+    "system_version": ">=3.0.0",
+    "history": {
+      "v1.0.0": "首个版本：基于 mitlearn/MoviePilot-PluginsV2 的 Prowlarr 索引器（plugins.v3, v2.0.0）复刻改造。① 去掉公开站过滤，改为收录 public/semiPrivate/private 全部索引器；② 修复分类探测失败/无影视分类导致索引器被整条丢弃的问题（改为兜底 Torznab 2000/5000）；③ 站点采用手动加站方式（SitesHelper 注册 + 站点管理手动添加 domain），不写宿主站点库。"
+    }
+  }
+}
