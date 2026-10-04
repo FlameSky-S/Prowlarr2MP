@@ -12,7 +12,7 @@ V3 适配（相对 v2 副本的功能保持不变）：
 - refresh_torrents 增加 mtype 形参（V3 浏览链路会传入）
 - 搜索链补丁适配 V3 _search_all_sites 签名（新增 mtype 参数）
 
-Version: 1.0.1
+Version: 1.0.2
 Author: FlameSky-S
 """
 
@@ -52,7 +52,7 @@ class Prowlarr2MP(_PluginBase):
     plugin_name = "Prowlarr2MP"
     plugin_desc = "将 Prowlarr 的索引器（公开 / 半公开 / 私有）桥接进 MoviePilot：手动加站后，用 Prowlarr 统一搜索并下载。"
     plugin_icon = "Prowlarr2MP.png"
-    plugin_version = "1.0.1"
+    plugin_version = "1.0.2"
     plugin_author = "FlameSky-S"
     author_url = "https://github.com/FlameSky-S"
     plugin_config_prefix = "prowlarr2mp_"
@@ -1278,7 +1278,7 @@ class Prowlarr2MP(_PluginBase):
                 page_url=item.get("infoUrl") or item.get("guid", ""),
                 site_name=site_name,
                 pubdate=self._parse_publish_date(item.get("publishDate", "")),
-                imdbid=self._format_imdb_id(item.get("imdbId")),
+                # MoviePilot v3 的 TorrentInfo 无 imdbid 字段：传入会抛 TypeError，导致整条结果被丢弃
                 downloadvolumefactor=download_volume_factor,
                 uploadvolumefactor=upload_volume_factor,
                 category=self._torrent_category(item.get("categories")),
@@ -1830,7 +1830,7 @@ class Prowlarr2MP(_PluginBase):
                 "seeders": t.seeders,
                 "peers": t.peers,
                 "pubdate": t.pubdate,
-                "imdbid": t.imdbid,
+                "imdbid": getattr(t, "imdbid", None),
                 "downloadvolumefactor": t.downloadvolumefactor,
                 "uploadvolumefactor": t.uploadvolumefactor,
                 "site_name": t.site_name,

@@ -152,3 +152,19 @@ def test_global_search_aggregates_all_indexers_even_when_indexer_sites_set():
     assert len(res) == 2, f"expected 2 (one per indexer), got {len(res)}"
     assert {r.site_name for r in res} == {"Prowlarr2MP-A", "Prowlarr2MP-B"}
     _s.SystemConfigOper.RETURN = None
+
+
+# ---- regression: parse must use the real TorrentInfo signature (no imdbid kwarg) ----
+def test_parse_torrent_info_matches_real_signature():
+    RequestUtils.RESPONDER = None
+    inst = new_inst()
+    inst._indexers = []
+    item = {"title": "Dune 2021 2160p", "downloadUrl": "http://dl/x", "size": 123,
+            "seeders": 3, "leechers": 1, "categories": [{"id": 2000}],
+            "publishDate": "2021-10-22T00:00:00Z", "imdbId": 1160419,
+            "infoUrl": "http://prowlarr/details/1", "sortTitle": "Dune"}
+    t = inst._parse_torrent_info(item, "Prowlarr2MP-A")
+    assert t is not None, "parse returned None -> TorrentInfo rejected a kwarg"
+    assert t.title == "Dune 2021 2160p"
+    assert t.site_name == "Prowlarr2MP-A"
+    assert getattr(t, "imdbid", None) is None

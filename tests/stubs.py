@@ -86,21 +86,29 @@ _set("app.sdk.logging", logger=logger)
 
 # ---------- app.sdk.media ----------
 class TorrentInfo:
-    def __init__(self, **kw):
-        self.title = kw.get("title", "")
-        self.enclosure = kw.get("enclosure", "")
-        self.description = kw.get("description", "")
-        self.size = kw.get("size", 0)
-        self.seeders = kw.get("seeders", 0)
-        self.peers = kw.get("peers", 0)
-        self.page_url = kw.get("page_url", "")
-        self.site_name = kw.get("site_name", "")
-        self.pubdate = kw.get("pubdate", "")
-        self.imdbid = kw.get("imdbid", "")
-        self.downloadvolumefactor = kw.get("downloadvolumefactor", 1.0)
-        self.uploadvolumefactor = kw.get("uploadvolumefactor", 1.0)
-        self.category = kw.get("category", None)
-        self.grabs = kw.get("grabs", 0)
+    # Explicit signature mirroring MoviePilot v3.1.0 (app.sdk.media.TorrentInfo).
+    # Strict on purpose: an unknown kwarg (e.g. imdbid) must raise TypeError, so the
+    # stub catches the same class of bug the real runtime does.
+    def __init__(self, site=None, site_name=None, site_cookie=None, site_ua=None, site_proxy=False,
+                 site_order=0, site_downloader=None, title=None, description=None, media_source=None,
+                 media_id=None, enclosure=None, page_url=None, size=0.0, seeders=0, peers=0, grabs=0,
+                 pubdate=None, date_elapsed=None, freedate=None, uploadvolumefactor=None,
+                 downloadvolumefactor=None, hit_and_run=False, labels=None, pri_order=0, category=None):
+        self.site = site
+        self.site_name = site_name
+        self.title = title
+        self.description = description
+        self.enclosure = enclosure
+        self.page_url = page_url
+        self.size = size
+        self.seeders = seeders
+        self.peers = peers
+        self.grabs = grabs
+        self.pubdate = pubdate
+        self.uploadvolumefactor = uploadvolumefactor
+        self.downloadvolumefactor = downloadvolumefactor
+        self.category = category
+        self.labels = labels if labels is not None else []
 
 
 _set("app.sdk.media", TorrentInfo=TorrentInfo)
