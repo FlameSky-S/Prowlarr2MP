@@ -132,3 +132,23 @@ def test_search_torrents_extracts_id_from_domain():
     assert res == []
     d = dict(captured["params"])
     assert d.get("indexerIds") == 12
+
+
+# ---- regression: global plugin-resource-source call must aggregate ALL indexers ----
+def test_global_search_aggregates_all_indexers_even_when_indexer_sites_set():
+    import stubs as _s
+    _s.SystemConfigOper.RETURN = [1, 4, 5]  # host site int ids; none equal our string ids
+    RequestUtils.RESPONDER = None
+    inst = new_inst()
+    inst._indexers = [
+        {"id": "Prowlarr2MP-A", "name": "Prowlarr2MP-A", "domain": "prowlarr2mp.1", "category": PUB_CAT},
+        {"id": "Prowlarr2MP-B", "name": "Prowlarr2MP-B", "domain": "prowlarr2mp.2", "category": PUB_CAT},
+    ]
+    item = {"title": "The Matrix 1999", "downloadUrl": "http://dl/1", "size": 100,
+            "seeders": 5, "leechers": 1, "categories": [{"id": 2000}],
+            "publishDate": "2020-01-02T03:04:05Z", "imdbId": 133093}
+    inst._search_prowlarr_api = lambda params, indexer_id=None: [item]
+    res = inst.search_torrents({}, "The Matrix", MediaType.MOVIE, 0)
+    assert len(res) == 2, f"expected 2 (one per indexer), got {len(res)}"
+    assert {r.site_name for r in res} == {"Prowlarr2MP-A", "Prowlarr2MP-B"}
+    _s.SystemConfigOper.RETURN = None

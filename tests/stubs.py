@@ -193,7 +193,10 @@ _set("app.chain.search", SearchChain=SearchChain)
 
 # ---------- app.db.oper.systemconfig ----------
 class SystemConfigOper:
-    def get(self, key=None): return None
+    RETURN = None  # tests may set this to simulate stored config values
+
+    def get(self, key=None):
+        return SystemConfigOper.RETURN
 
 
 _set("app.db.oper.systemconfig", SystemConfigOper=SystemConfigOper)

@@ -12,7 +12,7 @@ V3 适配（相对 v2 副本的功能保持不变）：
 - refresh_torrents 增加 mtype 形参（V3 浏览链路会传入）
 - 搜索链补丁适配 V3 _search_all_sites 签名（新增 mtype 参数）
 
-Version: 1.0.0
+Version: 1.0.1
 Author: FlameSky-S
 """
 
@@ -52,7 +52,7 @@ class Prowlarr2MP(_PluginBase):
     plugin_name = "Prowlarr2MP"
     plugin_desc = "将 Prowlarr 的索引器（公开 / 半公开 / 私有）桥接进 MoviePilot：手动加站后，用 Prowlarr 统一搜索并下载。"
     plugin_icon = "Prowlarr2MP.png"
-    plugin_version = "1.0.0"
+    plugin_version = "1.0.1"
     plugin_author = "FlameSky-S"
     author_url = "https://github.com/FlameSky-S"
     plugin_config_prefix = "prowlarr2mp_"
@@ -628,19 +628,14 @@ class Prowlarr2MP(_PluginBase):
     def _extra_search_sync(self, chain_self, en_keyword: str, mediainfo, sites, page: int) -> list:
         """
         同步：对本插件自己的索引器用英文标题发起补充搜索。
-        遵循与 __search_all_sites 相同的站点启用过滤逻辑。
+        聚合本插件全部已注册索引器（不做宿主站点选择过滤）。
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        from app.db.oper.systemconfig import SystemConfigOper
-        from app.schemas.types import SystemConfigKey
 
-        enabled_ids = sites or SystemConfigOper().get(SystemConfigKey.IndexerSites) or []
+        # 不做 IndexerSites 过滤：那是宿主站点整型 id，与插件字符串 id 不同源（见 search_torrents 全局分支注释）
         with self._indexers_lock:
             indexer_snapshot = list(self._indexers)
-        indexers = [
-            idx for idx in indexer_snapshot
-            if not enabled_ids or idx.get("id") in enabled_ids
-        ]
+        indexers = list(indexer_snapshot)
         if not indexers:
             return []
 
@@ -668,16 +663,11 @@ class Prowlarr2MP(_PluginBase):
         异步：对本插件自己的索引器用英文标题发起补充搜索。
         """
         import asyncio
-        from app.db.oper.systemconfig import SystemConfigOper
-        from app.schemas.types import SystemConfigKey
 
-        enabled_ids = sites or SystemConfigOper().get(SystemConfigKey.IndexerSites) or []
+        # 不做 IndexerSites 过滤：那是宿主站点整型 id，与插件字符串 id 不同源
         with self._indexers_lock:
             indexer_snapshot = list(self._indexers)
-        indexers = [
-            idx for idx in indexer_snapshot
-            if not enabled_ids or idx.get("id") in enabled_ids
-        ]
+        indexers = list(indexer_snapshot)
         if not indexers:
             return []
 
@@ -900,18 +890,13 @@ class Prowlarr2MP(_PluginBase):
             return results
 
         # V3：搜索链对插件资源源只全局调用一次（site 为空字典），
-        # 此时遍历本插件全部已启用索引器聚合结果；按站点传入的调用路径保持不变。
+        # 此时遍历本插件全部已注册索引器聚合结果；按站点传入的调用路径保持不变。
         if not site:
-            from app.db.oper.systemconfig import SystemConfigOper
-            from app.schemas.types import SystemConfigKey
-
-            # 与 V2 搜索链行为一致：只搜索「启用的索引站点」中勾选的本插件索引器
-            enabled_ids = SystemConfigOper().get(SystemConfigKey.IndexerSites) or []
+            # 注意：不要用 SystemConfigKey.IndexerSites 过滤。那是宿主站点表的整型 id，
+            # 与本插件的字符串 id（"Prowlarr2MP-<title>"）不是同一套键，会让所有索引器被静默跳过。
             with self._indexers_lock:
                 indexer_snapshot = list(self._indexers)
             for indexer in indexer_snapshot:
-                if enabled_ids and indexer.get("id") not in enabled_ids:
-                    continue
                 try:
                     results.extend(self.search_torrents(site=indexer, keyword=keyword, mtype=mtype, page=page))
                 except Exception as e:
